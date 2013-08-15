@@ -1233,4 +1233,129 @@ void BaseChannelGroupInterface::removeMembers(const Tp::UIntList& handles)
         QMetaObject::invokeMethod(mPriv->adaptee,"membersChanged",Q_ARG(QString, QString()), Q_ARG(Tp::UIntList, Tp::UIntList()), Q_ARG(Tp::UIntList, removed), Q_ARG(Tp::UIntList, Tp::UIntList()), Q_ARG(Tp::UIntList, Tp::UIntList()), Q_ARG(uint, 0), Q_ARG(uint,ChannelGroupChangeReasonNone)); //Can simply use emit in Qt5 //Can simply use emit in Qt5
 }
 
+//Chan.I.SMS
+BaseChannelSmsInterface::Adaptee::Adaptee(BaseChannelSmsInterface *interface)
+    : QObject(interface),
+      mInterface(interface)
+{
+}
+
+BaseChannelSmsInterface::Adaptee::~Adaptee()
+{
+}
+
+void BaseChannelSmsInterface::Adaptee::getSmsLength(const Tp::MessagePartList &message,
+        const Tp::Service::ChannelInterfaceSMSAdaptor::GetSMSLengthContextPtr &context) //FIXME SMS Sms
+{
+    DBusError error;
+    uint len = mInterface->getSmsLength(message, &error); //TODO to fix
+    if (error.isValid()) {
+        context->setFinishedWithError(error.name(), error.message());
+        return;
+    }
+    context->setFinished(len); //TODO
+}
+
+struct TP_QT_NO_EXPORT BaseChannelSmsInterface::Private {
+    Private(BaseChannelSmsInterface *parent,
+            BaseChannelTextType* textTypeInterface,
+            bool flash,
+            bool smsChannel)
+        : textTypeInterface(textTypeInterface),
+          flash(flash),
+          smsChannel(smsChannel),
+          adaptee(new BaseChannelSmsInterface::Adaptee(parent)) {
+    }
+
+    BaseChannelTextType* textTypeInterface;
+    bool flash;
+    bool smsChannel;
+    BaseChannelSmsInterface::Adaptee *adaptee;
+};
+
+/**
+ * \class BaseChannelSmsInterface
+ * \ingroup servicecm
+ * \headerfile TelepathyQt/base-channel.h <TelepathyQt/BaseChannel>
+ *
+ * \brief Base class for implementations of Channel.Interface.Group
+ *
+ */
+
+/**
+ * Class constructor.
+ */
+BaseChannelSmsInterface::BaseChannelSmsInterface(BaseChannelTextType* textType, bool flash, bool smsChannel)
+    : AbstractChannelInterface(TP_QT_IFACE_CHANNEL_INTERFACE_SMS),
+      mPriv(new Private(this, textType, flash, smsChannel))
+{
+}
+
+/**
+ * Class destructor.
+ */
+BaseChannelSmsInterface::~BaseChannelSmsInterface()
+{
+    delete mPriv;
+}
+
+/**
+ * Return the immutable properties of this interface.
+ *
+ * Immutable properties cannot change after the interface has been registered
+ * on a service on the bus with registerInterface().
+ *
+ * \return The immutable properties of this interface.
+ */
+QVariantMap BaseChannelSmsInterface::immutableProperties() const
+{
+    QVariantMap map;
+
+    map.insert(TP_QT_IFACE_CHANNEL_INTERFACE_SMS + QLatin1String(".Flash"),
+               QVariant::fromValue(mPriv->adaptee->flash()));
+    map.insert(TP_QT_IFACE_CHANNEL_INTERFACE_SMS + QLatin1String(".SmsChannel"),
+               QVariant::fromValue(mPriv->adaptee->smsChannel()));
+    return map;
+}
+
+void BaseChannelSmsInterface::createAdaptor()
+{
+    (void) new Service::ChannelInterfaceSMSAdaptor(dbusObject()->dbusConnection(),
+            mPriv->adaptee, dbusObject());
+}
+
+bool BaseChannelSmsInterface::flash()
+{
+    return mPriv->flash;
+}
+
+bool BaseChannelSmsInterface::smsChannel()
+{
+    return mPriv->smsChannel;
+}
+
+void BaseChannelSmsInterface::smsChannelChanged(bool smsChannel)
+{
+    QMetaObject::invokeMethod(mPriv->adaptee, "smsChannelChanged", Q_ARG(bool, smsChannel)); //Can simply use emit in Qt5
+}
+
+uint BaseChannelSmsInterface::getSmsLength(const Tp::MessagePartList &message, DBusError* error) //TODO return the whole struct
+{
+    if (message.empty()) {
+        return 0;
+    }
+
+    QString content;
+    for (MessagePartList::const_iterator i = message.begin() + 1; i != message.end(); ++i)
+        if (i->count(QLatin1String("content-type"))
+                && i->value(QLatin1String("content-type")).variant().toString() == QLatin1String("text/plain")
+                && i->count(QLatin1String("content"))) {
+            content = i->value(QLatin1String("content")).variant().toString();
+            break;
+        }
+    uint chunks = content.length()/140 + ((content.length()%140)?1:0);
+
+    return chunks;
+}
+
 }

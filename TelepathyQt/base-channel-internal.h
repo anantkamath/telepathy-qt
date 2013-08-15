@@ -234,4 +234,29 @@ public:
     BaseChannelGroupInterface *mInterface;
 };
 
+class TP_QT_NO_EXPORT BaseChannelSmsInterface::Adaptee : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(bool flash READ flash)
+    Q_PROPERTY(bool smsChannel READ smsChannel)
+public:
+    Adaptee(BaseChannelSmsInterface *interface);
+    ~Adaptee();
+
+    bool flash() {
+        return mInterface->flash();
+    }
+    bool smsChannel() {
+        return mInterface->smsChannel();
+    }
+
+public slots:
+    void getSmsLength(const Tp::MessagePartList &message, const Tp::Service::ChannelInterfaceSMSAdaptor::GetSMSLengthContextPtr &context);
+signals:
+    void smsChannelChanged(bool smsChannel);
+
+public:
+    BaseChannelSmsInterface *mInterface;
+};
+
 }

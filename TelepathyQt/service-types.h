@@ -49,6 +49,7 @@ class BaseProtocolPresenceInterface;
 class BaseChannel;
 class BaseChannelTextType;
 class BaseChannelMessagesInterface;
+class BaseChannelSmsInterface;
 class BaseChannelServerAuthenticationType;
 class BaseChannelCaptchaAuthenticationInterface;
 class BaseChannelGroupInterface;
@@ -73,6 +74,7 @@ typedef SharedPtr<BaseProtocolPresenceInterface> BaseProtocolPresenceInterfacePt
 typedef SharedPtr<BaseChannel> BaseChannelPtr;
 typedef SharedPtr<BaseChannelTextType> BaseChannelTextTypePtr;
 typedef SharedPtr<BaseChannelMessagesInterface> BaseChannelMessagesInterfacePtr;
+typedef SharedPtr<BaseChannelSmsInterface> BaseChannelSmsInterfacePtr;
 typedef SharedPtr<BaseChannelServerAuthenticationType> BaseChannelServerAuthenticationTypePtr;
 typedef SharedPtr<BaseChannelCaptchaAuthenticationInterface> BaseChannelCaptchaAuthenticationInterfacePtr;
 typedef SharedPtr<BaseChannelGroupInterface> BaseChannelGroupInterfacePtr;
